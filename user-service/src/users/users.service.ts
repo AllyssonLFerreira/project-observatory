@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
-import { DeleteResult, Repository } from 'typeorm';
-import { hash } from 'bcrypt';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -13,65 +13,47 @@ export class UsersService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async createHashPassword(password: string): Promise<string> {
-    const saltOrRounds = 10;
-    return hash(password, saltOrRounds);
-  }
-
   async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
-    const passwordHashed = await this.createHashPassword(
-      createUserDto.user_password,
-    );
-
-    return this.userRepository.save({
+    const newUser = await this.userRepository.save({
       ...createUserDto,
-      user_password: passwordHashed,
+      user_password: await bcrypt.hash(createUserDto.password, 10),
     });
+    delete newUser.password;
+    return newUser;
   }
 
   async getAllUsers(): Promise<UserEntity[]> {
     return this.userRepository.find();
   }
 
-  async getUserByID(id: number): Promise<UserEntity> {
+  async getUserByID(id: number) {
     const user = await this.userRepository.findOne({
       where: {
         user_id: id,
       },
     });
-
     if (!user) {
       throw new NotFoundException(`user id: ${id} not found`);
     }
     return user;
   }
 
-  async getUserByEmail(email: string): Promise<UserEntity> {
-    const user = await this.userRepository.findOne({
-      where: {
-        user_email: email,
-      },
+  async getUserByEmail(email: string) {
+    const userIsTrue = await this.userRepository.findOne({
+      where: { email: email },
     });
-
-    if (!email) {
-      throw new NotFoundException(`email ${email} does not exist`);
-    }
-    return user;
+    return userIsTrue;
   }
 
-  async updateUser(
-    id: number,
-    updateUserDto: UpdateUserDto,
-  ): Promise<UserEntity> {
+  async updateUser(id: number, updateUserDto: UpdateUserDto) {
     const user = await this.getUserByID(id);
-
     return this.userRepository.save({
       ...user,
       ...updateUserDto,
     });
   }
 
-  async deleteUser(id: number): Promise<DeleteResult> {
+  async deleteUser(id: number) {
     await this.getUserByID(id);
     return this.userRepository.delete({ user_id: id });
   }

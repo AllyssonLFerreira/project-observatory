@@ -1,17 +1,17 @@
 import { UserEntity } from '../entities/user.entity';
 
 export class ReturnUserDto {
-  user_id: number;
-  user_name: string;
-  user_email: string;
-  user_username: string;
-  user_birthday: Date;
+  id: number;
+  name: string;
+  email: string;
+  username: string;
+  birthday: Date;
 
   constructor(userEntity: UserEntity) {
-    this.user_id = userEntity.user_id;
-    this.user_name = userEntity.user_name;
-    this.user_email = userEntity.user_email;
-    this.user_username = userEntity.user_username;
-    this.user_birthday = userEntity.user_birthday;
+    this.id = userEntity.user_id;
+    this.name = userEntity.name;
+    this.email = userEntity.email;
+    this.username = userEntity.username;
+    this.birthday = userEntity.birthday;
   }
 }
